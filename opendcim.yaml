@@ -1,0 +1,75 @@
+---
+- name: Configure webserver with apache2
+  hosts: default
+  vars_files:
+    - vars/main.yml
+  roles:
+    - { role: geerlingguy.apache }
+  sudo: True
+  tasks:
+    - name: install packages
+      apt: name={{item}} update_cache=yes
+      with_items:
+        - apache2
+        - php5
+        - php5-snmp
+        - php5-mysql
+        - mysql-server
+        - apache2-utils
+        - git
+        - python-mysqldb #required by ansible mysql_db module
+        - python-passlib
+
+    - name: enable apache modules
+      apache2_module: state=present name=rewrite
+      notify:
+        - restart apache2
+
+    - name: Clone OpenDCIM git repo to /var/www/opendcim
+      git: repo=https://github.com/samilliken/openDCIM.git dest=/var/www/vhosts/opendcim version=4.0.1 force=yes
+
+    - name: Copy db.inc.php-dist
+      command: cp /var/www/vhosts/opendcim/db.inc.php-dist /var/www/vhosts/opendcim/db.inc.php
+    - name: Create htaccess file
+      template: src=templates/htaccess.j2 dest=/var/www/vhosts/opendcim/.htaccess
+
+    - name: Create htpasswd file
+      htpasswd: path=/var/www/users name={{webuser}} password={{webpassword}}
+
+    - name: Put database variables
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbhost = \'localhost\';" replace='$dbhost = "'{{databaseip}}'";'
+    - name: Put database variables
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbname = \'dcim\';" replace='$dbname = "'{{databasename}}'";'
+    - name: Put database variables
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbuser = \'dcim\';" replace='$dbuser = "'{{databaseuser}}'";'
+    - name: Put database variables
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbpass = \'dcim\';" replace='$dbpass = "'{{databasepassword}}'";'
+
+    - name: Set root user password
+      mysql_user: name=root
+                  host="127.0.0.1"
+                  password="{{ databasepassword }}"
+                  check_implicit_admin=yes
+                  state=present
+
+    - name: Create database user
+      mysql_user: host="127.0.0.1" login_user=root login_password='' name={{databaseuser}} password={{databasepassword}} priv={{databasename}}.*:ALL,GRANT state=present
+    - name: Create database
+      mysql_db: login_host="127.0.0.1" name={{databasename}} login_user={{databaseuser}} login_password={{databasepassword}} state=present
+
+    - name: Upload database backup
+      copy: src=dump.sql.bz2 dest=/tmp
+      ignore_errors: yes
+      notify:
+        - Load database backup
+
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted
+
+    - name: Load database backup
+      mysql_db: login_host="127.0.0.1" name={{databasename}} login_user={{databaseuser}} login_password={{databasepassword}} state=import target=/tmp/dump.sql.bz2
+      notify:
+        - delete install.php file
+    - name: delete install.php file
+      file: path=/var/www/vhosts/opendcim/install.php state=absent

@@ -1,0 +1,2 @@
+[default]
+testserver ansible_ssh_host=<IP_address>

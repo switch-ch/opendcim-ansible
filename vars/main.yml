@@ -1,0 +1,14 @@
+apache_listen_port: 80
+apache_vhosts:
+  - servername: "localhost"
+    documentroot: "/var/www/vhosts/opendcim"
+
+apache_remove_default_vhost: true
+
+databaseip: 127.0.0.1
+databasename: dcim
+databaseuser: opendcim
+databasepassword: passdcim
+
+webuser: opendcim
+webpassword: opendcim
