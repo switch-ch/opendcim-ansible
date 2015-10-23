@@ -26,7 +26,7 @@
         - restart apache2
 
     - name: Clone OpenDCIM git repo to /var/www/opendcim
-      git: repo=https://github.com/samilliken/openDCIM.git dest=/var/www/vhosts/opendcim version=4.0.1 force=yes
+      git: repo=https://github.com/samilliken/openDCIM.git dest=/var/www/vhosts/opendcim version={{opendcim_version}} force=yes
 
     - name: Copy db.inc.php-dist
       command: cp /var/www/vhosts/opendcim/db.inc.php-dist /var/www/vhosts/opendcim/db.inc.php
