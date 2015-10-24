@@ -7,6 +7,8 @@
     - { role: geerlingguy.apache }
   sudo: True
   tasks:
+    - name: enable ubuntu multiuniverse
+      command: apt-add-repository multiverse
     - name: install packages
       apt: name={{item}} update_cache=yes
       with_items:
