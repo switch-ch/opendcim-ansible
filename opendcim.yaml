@@ -21,6 +21,7 @@
         - python-passlib
         - snmp-mibs-downloader # required for Online Repository module
         - php5-curl # required Online Repository
+        - graphviz # required for Network Map report
 
     - name: enable apache modules
       apache2_module: state=present name=rewrite
