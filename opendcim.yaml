@@ -42,7 +42,10 @@
       template: src=templates/htaccess.j2 dest=/var/www/vhosts/opendcim/.htaccess
 
     - name: Create htpasswd file
-      htpasswd: path=/var/www/users name={{webuser}} password={{webpassword}}
+      # support multiple users http://docs.ansible.com/ansible/htpasswd_module.html
+      # http://docs.ansible.com/ansible/playbooks_loops.html#looping-over-hashes
+      htpasswd: path=/var/www/users name={{item.value.name}} password={{item.value.password}} state={{item.value.state}}
+      with_dict: "{{webusers}}"
 
     - name: Put database variables
       replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbhost = \'localhost\';" replace='$dbhost = "{{databaseip}}";'

@@ -13,5 +13,14 @@ databasename: dcim
 databaseuser: opendcim
 databasepassword: passdcim
 
-webuser: opendcim
-webpassword: opendcim
+# support multiple users
+# http://docs.ansible.com/ansible/htpasswd_module.html
+webusers: 
+  opendcim:
+    name: opendcim
+    password: opendcim
+    state: present
+  test:
+    name: test
+    password: test
+    state: absent
