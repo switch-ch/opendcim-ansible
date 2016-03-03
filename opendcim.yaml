@@ -45,13 +45,13 @@
       htpasswd: path=/var/www/users name={{webuser}} password={{webpassword}}
 
     - name: Put database variables
-      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbhost = \'localhost\';" replace='$dbhost = "'{{databaseip}}'";'
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbhost = \'localhost\';" replace='$dbhost = "{{databaseip}}";'
     - name: Put database variables
-      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbname = \'dcim\';" replace='$dbname = "'{{databasename}}'";'
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbname = \'dcim\';" replace='$dbname = "{{databasename}}";'
     - name: Put database variables
-      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbuser = \'dcim\';" replace='$dbuser = "'{{databaseuser}}'";'
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbuser = \'dcim\';" replace='$dbuser = "{{databaseuser}}";'
     - name: Put database variables
-      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbpass = \'dcim\';" replace='$dbpass = "'{{databasepassword}}'";'
+      replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbpass = \'dcim\';" replace='$dbpass = "{{databasepassword}}";'
     - name: Download mibs
       command: download-mibs
 
