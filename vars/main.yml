@@ -6,7 +6,7 @@ apache_vhosts:
 apache_remove_default_vhost: true
 
 #This is any branch tag or commit identifier from OpenDCIM git repository
-opendcim_version: 4.1
+opendcim_version: 4.1.1
 
 databaseip: 127.0.0.1
 databasename: dcim
