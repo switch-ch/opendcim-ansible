@@ -5,17 +5,22 @@
     - vars/main.yml
   roles:
     - { role: geerlingguy.apache }
-  sudo: True
+  become: True
   tasks:
     - name: enable ubuntu multiuniverse
       command: apt-add-repository multiverse
+    - name: update all
+      apt: upgrade=dist update_cache=yes
     - name: install packages
       apt: name={{item}} update_cache=yes
       with_items:
         - apache2
-        - php5
-        - php5-snmp
-        - php5-mysql
+        - php7.0
+        - php7.0-snmp
+        - php7.0-mysql
+        - php7.0-mbstring
+        - php7.0-xml
+        - libapache2-mod-php7.0
         - mysql-server
         - apache2-utils
         - git
@@ -23,7 +28,7 @@
         - python-passlib
         - snmp
         - snmp-mibs-downloader # required for Online Repository module
-        - php5-curl # required Online Repository
+        - php7.0-curl # required Online Repository
         - graphviz # required for Network Map report
 
     - name: fix snmp config
@@ -33,11 +38,25 @@
       notify:
         - restart apache2
 
+    - name: Check if OpenDCIM code is already cloned
+      stat:
+        path: /var/www/vhosts/opendcim
+      register: varwww
+
     - name: Clone OpenDCIM git repo to /var/www/opendcim
       git: repo=https://github.com/samilliken/openDCIM.git dest=/var/www/vhosts/opendcim version={{opendcim_version}} force=yes
+      when: varwww.stat.exists == False
+
+    - name: Fix permissions
+      file:
+        path: /var/www/vhosts/opendcim
+        owner: www-data
+        group: www-data
+        recurse: yes
 
     - name: Copy db.inc.php-dist
-      command: cp /var/www/vhosts/opendcim/db.inc.php-dist /var/www/vhosts/opendcim/db.inc.php
+      command: mv /var/www/vhosts/opendcim/db.inc.php-dist /var/www/vhosts/opendcim/db.inc.php
+      when: varwww.stat.exists == False
     - name: Create htaccess file
       template: src=templates/htaccess.j2 dest=/var/www/vhosts/opendcim/.htaccess
 
@@ -54,6 +73,15 @@
       replace: dest=/var/www/vhosts/opendcim/db.inc.php regexp="\$dbpass = \'dcim\';" replace='$dbpass = "{{databasepassword}}";'
     - name: Download mibs
       command: download-mibs
+
+    - name: Mysql config
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        insertafter: '\[mysqld\]'
+        line: " sql_mode=\"\" "
+      notify:
+        - restart mysql
+
 
     - name: Set root user password
       mysql_user: name=root
@@ -75,7 +103,10 @@
 
   handlers:
     - name: restart apache2
-      service: name=apache2 state=restarted
+      shell: systemctl restart apache2.service
+
+    - name: restart mysql
+      shell: systemctl restart mysql.service
 
     - name: Load database backup
       mysql_db: login_host="127.0.0.1" name={{databasename}} login_user={{databaseuser}} login_password={{databasepassword}} state=import target=/tmp/dump.sql.bz2
